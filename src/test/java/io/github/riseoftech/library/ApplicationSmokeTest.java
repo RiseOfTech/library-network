@@ -31,4 +31,14 @@ class ApplicationSmokeTest extends IntegrationTest {
                 .hasStatus(HttpStatus.OK)
                 .bodyJson().extractingPath("$.openapi").asString().startsWith("3.");
     }
+
+    @Test
+    void loanEndpointsAreDocumented() {
+        var body = assertThat(mvc.get().uri("/v3/api-docs"))
+                .hasStatus(HttpStatus.OK)
+                .bodyJson();
+        body.extractingPath("$.paths['/api/loans']").asMap().containsKeys("get", "post");
+        body.extractingPath("$.paths['/api/loans/{id}']").asMap().containsKey("get");
+        body.extractingPath("$.paths['/api/loans/{id}/return']").asMap().containsKey("post");
+    }
 }

@@ -66,6 +66,18 @@ public class Copy {
         status = CopyStatus.ON_SHELF;
     }
 
+    /** {@code ON_SHELF -> ON_LOAN}. */
+    public void checkOut() {
+        requireStatus(CopyStatus.ON_SHELF, "checked out");
+        status = CopyStatus.ON_LOAN;
+    }
+
+    /** {@code ON_LOAN -> ON_SHELF}, back in the branch the copy belongs to. */
+    public void checkIn() {
+        requireStatus(CopyStatus.ON_LOAN, "checked in");
+        status = CopyStatus.ON_SHELF;
+    }
+
     private void requireStatus(CopyStatus expected, String action) {
         if (status != expected) {
             throw new CopyStatusConflictException(id, status, action);

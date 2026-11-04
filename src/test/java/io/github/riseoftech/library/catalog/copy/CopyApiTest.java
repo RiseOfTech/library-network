@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import com.jayway.jsonpath.JsonPath;
 import io.github.riseoftech.library.IntegrationTest;
 import io.github.riseoftech.library.catalog.book.Book;
 import io.github.riseoftech.library.catalog.book.BookRepository;
@@ -13,6 +15,8 @@ import io.github.riseoftech.library.catalog.branch.Branch;
 import io.github.riseoftech.library.catalog.branch.BranchRepository;
 import io.github.riseoftech.library.common.ErrorCodes;
 import io.github.riseoftech.library.common.UniqueConstraints;
+import io.github.riseoftech.library.readers.reader.Reader;
+import io.github.riseoftech.library.readers.reader.ReaderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,13 +38,16 @@ class CopyApiTest extends IntegrationTest {
     @Autowired
     BranchRepository branches;
 
+    @Autowired
+    ReaderRepository readers;
+
     Book book;
     Branch central;
     Branch north;
 
     @BeforeEach
     void setUp() {
-        truncate("copy", "book_author", "book", "branch");
+        truncate("loan", "copy", "book_author", "book", "branch", "reader");
         book = books.save(new Book("Dune", List.of("Frank Herbert"), "9780441172719", 1965));
         central = branches.save(new Branch("CENTRAL", "Central Library", "1 Main St"));
         north = branches.save(new Branch("NORTH", "North Library", "9 North Rd"));
@@ -165,6 +172,20 @@ class CopyApiTest extends IntegrationTest {
                 .hasStatus(HttpStatus.CONFLICT)
                 .bodyJson().extractingPath("$.code").isEqualTo("COPY_STATUS_CONFLICT");
         assertThat(statusOf(copy)).isEqualTo(CopyStatus.LOST);
+    }
+
+    @Test
+    void copyOnLoanCannotBeMarkedLost() throws Exception {
+        Copy copy = copy(central, "CEN-1");
+        long loanId = checkOut(copy);
+
+        assertThat(mvc.post().uri("/api/copies/{id}/lost", copy.getId()))
+                .hasStatus(HttpStatus.CONFLICT)
+                .bodyJson().extractingPath("$.code").isEqualTo("COPY_STATUS_CONFLICT");
+        assertThat(statusOf(copy)).isEqualTo(CopyStatus.ON_LOAN);
+        assertThat(mvc.get().uri("/api/loans/{id}", loanId))
+                .hasStatus(HttpStatus.OK)
+                .bodyJson().extractingPath("$.status").isEqualTo("OPEN");
     }
 
     @Test
@@ -305,6 +326,22 @@ class CopyApiTest extends IntegrationTest {
     }
 
     @Test
+    void copiesOnLoanAreCountedButNotOnShelf() throws Exception {
+        Copy copy = copy(central, "CEN-1");
+        copy(central, "CEN-2");
+        assertAvailability(2, 2);
+
+        long loanId = checkOut(copy);
+        assertAvailability(2, 1);
+
+        assertThat(mvc.post().uri("/api/loans/{id}/return", loanId).contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"branchId": %d}""".formatted(central.getId())))
+                .hasStatus(HttpStatus.OK);
+        assertAvailability(2, 2);
+    }
+
+    @Test
     void bookWithoutCopies() {
         assertThat(mvc.get().uri("/api/books/{id}/availability", book.getId()))
                 .hasStatus(HttpStatus.OK)
@@ -336,6 +373,28 @@ class CopyApiTest extends IntegrationTest {
         Copy copy = new Copy(book, branch, inventoryNumber);
         ReflectionTestUtils.setField(copy, "status", status);
         return copies.save(copy);
+    }
+
+    /** Checks the copy out through the loans API to a new adult reader and returns the loan id. */
+    private long checkOut(Copy copy) throws Exception {
+        Reader reader = readers.save(new Reader("LN-000001", "Anna", "Petrova", LocalDate.of(1990, 5, 17),
+                "ADULT", "anna@example.org", null));
+        var result = mvc.post().uri("/api/loans").contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {"readerId": %d, "copyId": %d, "branchId": %d}"""
+                        .formatted(reader.getId(), copy.getId(), copy.getBranch().getId()))
+                .exchange();
+        assertThat(result).hasStatus(HttpStatus.CREATED);
+        return ((Number) JsonPath.read(result.getResponse().getContentAsString(), "$.id")).longValue();
+    }
+
+    private void assertAvailability(int total, int onShelf) {
+        var body = assertThat(mvc.get().uri("/api/books/{id}/availability", book.getId()))
+                .hasStatus(HttpStatus.OK)
+                .bodyJson();
+        body.extractingPath("$[0].branchCode").isEqualTo("CENTRAL");
+        body.extractingPath("$[0].total").isEqualTo(total);
+        body.extractingPath("$[0].onShelf").isEqualTo(onShelf);
     }
 
     private CopyStatus statusOf(Copy copy) {

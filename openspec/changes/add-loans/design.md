@@ -162,6 +162,16 @@ create index ix_loan_copy on loan (copy_id, checked_out_at desc);
 there for `add-renewals` (a renewal racing a return). `V1`-`V3` are not touched. Test cleanup must add
 `loan` to the `truncate` lists (or rely on `cascade`, which `truncate(...)` already uses).
 
+### Decisions taken during implementation
+- `Loan.open(reader, copy, branch, checkedOutAt, today, periodDays)` is the only way to create a loan;
+  it rejects a non-positive period (mirrors `ck_loan_period_positive`).
+- The overdue rule lives on the entity (`Loan.isOverdue(today)`) so it is unit-tested once and
+  `LoanResponse.from` only passes `today` from the `Clock`.
+- The `status` filter is passed to the repository as a nullable `Boolean open`, so one JPQL query with
+  a separate count query serves all filter combinations.
+- `get` uses plain `findById` inside the read-only transaction; lazy summaries load there, only the
+  list query needs `join fetch`.
+
 ## Risks / Trade-offs
 
 - [Pessimistic locks block instead of failing fast] → transactions are a few short statements; no

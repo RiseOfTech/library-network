@@ -11,4 +11,9 @@ public class ReaderCategoryNotAllowedException extends ConflictException {
     public ReaderCategoryNotAllowedException(String category, LocalDate dateOfBirth) {
         super(CODE, "Category " + category + " is not allowed for a reader born on " + dateOfBirth);
     }
+
+    /** The reader's stored category is no longer among the configured categories. */
+    public ReaderCategoryNotAllowedException(long readerId, String category) {
+        super(CODE, "Reader " + readerId + " has category " + category + ", which is not configured");
+    }
 }

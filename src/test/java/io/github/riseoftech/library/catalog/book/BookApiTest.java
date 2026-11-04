@@ -25,7 +25,7 @@ class BookApiTest extends IntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        truncate("copy", "book_author", "book");
+        truncate("loan", "copy", "book_author", "book");
     }
 
     // --- create ---
