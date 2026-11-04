@@ -2,10 +2,10 @@
 
 ## 1. Shared infrastructure
 
-- [ ] 1.1 Add `common/ClockConfiguration` with a `Clock` bean (`Clock.systemDefaultZone()`) and a `ValidationConfigurationCustomizer` that sets a `ClockProvider` backed by it
-- [ ] 1.2 Add a test `@TestConfiguration` with a `@Primary` fixed `Clock` at `2026-11-04` and import it in `IntegrationTest`
-- [ ] 1.3 Move the LIKE escaping from `BookService` into a `common` helper (lower-case, escape `\`, `%`, `_`, wrap in `%`) and use it from `BookService`; `BookApiTest` still passes
-- [ ] 1.4 Add tests: unit test for the escaping helper (`%`, `_`, `\`, mixed case); integration test that `@PastOrPresent` uses the fixed clock (a date one day after the fixed date is rejected, the fixed date itself is accepted); verify they pass
+- [x] 1.1 Add `common/ClockConfiguration` with a `Clock` bean (`Clock.systemDefaultZone()`) and a `ValidationConfigurationCustomizer` that sets a `ClockProvider` backed by it
+- [x] 1.2 Add a test `@TestConfiguration` with a `@Primary` fixed `Clock` at `2026-11-04` and import it in `IntegrationTest`
+- [x] 1.3 Move the LIKE escaping from `BookService` into a `common` helper (lower-case, escape `\`, `%`, `_`, wrap in `%`) and use it from `BookService`; `BookApiTest` still passes
+- [x] 1.4 Add tests: unit test for the escaping helper (`%`, `_`, `\`, mixed case); integration test that `@PastOrPresent` uses the fixed clock (a date one day after the fixed date is rejected, the fixed date itself is accepted); verify they pass
 
 ## 2. Database schema
 
