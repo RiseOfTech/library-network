@@ -9,6 +9,24 @@ every feature is a separate change with a proposal, specs, design and tasks.
 Current specs live in [`openspec/specs`](openspec/specs), finished changes in
 [`openspec/changes/archive`](openspec/changes/archive).
 
+## Roadmap
+
+Each line is one OpenSpec change, done strictly in this order: the next change starts only
+after the previous one is archived. Numbers are proposed defaults; the final values are fixed
+in each change's proposal and live in configuration.
+
+| # | Change | Scope | Boundary with other changes |
+|---|---|---|---|
+| 1 | `add-catalog` | Branches, books (ISBN-13, search), copies with statuses `ON_SHELF`, `ON_LOAN`, `ON_HOLD`, `IN_TRANSIT`, `LOST`; mark lost / found; availability per branch | Only lost/found transitions; others come with loans, holds, transfers |
+| 2 | `add-readers` | Reader categories from configuration (adult: 5 loans / 21 days, student: 10 / 30, child: 3 / 14), reader registration with a unique card number, update, search | No loans yet; fines and blocking come later |
+| 3 | `add-loans` | Checkout of an `ON_SHELF` copy in its branch, return, category loan limit, due date from category period, two readers cannot check out the same copy | Return only at the copy's own branch (returns elsewhere come with transfers); no renewals, holds or fines |
+| 4 | `add-renewals` | Renew a loan up to 2 times, each by the category period from the current due date; no renewal of an overdue loan | The "no renewal when a hold queue exists" rule is added by `add-holds` |
+| 5 | `add-holds` | Hold queue per book (not per copy) with a pickup branch; a returned or free copy in the pickup branch goes to the first in queue (`ON_HOLD`), pickup window 5 days; checkout of a held copy only by its holder; last-copy protection under concurrency; blocks renewals when the queue is not empty | Only copies already in the pickup branch serve holds; cross-branch delivery comes with transfers |
+| 6 | `add-transfers` | Transfer of a copy between branches: requested, shipped (`IN_TRANSIT`), received. Created automatically when a hold can only be served from another branch; return at a foreign branch sends the copy home | — |
+| 7 | `add-fines` | Overdue fine per day (0.20 per day, in minor units), charged on late return; payments; checkout blocked while unpaid fines exceed 5.00 | Daily accrual for still-open loans comes with the job |
+| 8 | `add-overdue-job` | Nightly scheduled job (cron in configuration): marks overdue loans, accrues fines for open overdue loans, expires uncollected holds and passes the copy to the next in queue. Idempotent per day | — |
+| 9 | `add-notifications` | Notifications through a pluggable sender (log stub by default): hold ready for pickup, loan due in 2 days (sent by the nightly job) | — |
+
 ## Stack
 
 Java 21, Spring Boot 4, Gradle (Kotlin DSL), PostgreSQL, Flyway,
