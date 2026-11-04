@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openspec validate)",
+      "Bash(openspec validate *)",
+      "Bash(openspec instructions *)",
+      "Bash(openspec status *)",
+      "Bash(openspec list)",
+      "Bash(openspec list *)",
+      "Bash(docker info)",
+      "Bash(docker info *)",
+      "Bash(javap *)",
+      "mcp__claude_ai_Claude_Docs__guide"
+    ]
+  }
+}

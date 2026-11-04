@@ -24,6 +24,14 @@ context: |
     (@ConfigurationProperties), not hard-coded.
   - Schema changes only through new Flyway migrations; existing migrations are never edited.
   - No documentation beyond README.md and OpenSpec artifacts (no docs/ folder).
+  - Current time is always taken from an injectable java.time.Clock (needed for due dates,
+    fines and the nightly job tests).
+  - Money is stored and returned in minor units (long), single currency.
+
+  Roadmap: the ordered list of planned changes and the scope boundary of each is in the
+  "Roadmap" section of README.md. Keep every change inside its row; behavior that the roadmap
+  assigns to a later change is out of scope. If a change needs to shift a boundary, update the
+  roadmap row in the same change.
 
 rules:
   proposal:

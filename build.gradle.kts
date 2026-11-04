@@ -1,3 +1,7 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.api.tasks.testing.logging.TestStackTraceFilter
+
 plugins {
     java
     alias(libs.plugins.spring.boot)
@@ -41,4 +45,30 @@ tasks.withType<JavaCompile> {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+
+    // Compact output: only failed tests (message + the failing test line) and one summary line.
+    // Configured for both lifecycle and quiet levels so it also shows with `-q`.
+    testLogging {
+        for (level in listOf(lifecycle, quiet)) {
+            level.events(TestLogEvent.FAILED)
+            level.exceptionFormat = TestExceptionFormat.FULL
+            level.showExceptions = true
+            level.showCauses = true
+            level.showStackTraces = true
+            level.stackTraceFilters = setOf(TestStackTraceFilter.ENTRY_POINT)
+        }
+    }
+    addTestListener(object : TestListener {
+        override fun beforeSuite(suite: TestDescriptor) {}
+        override fun beforeTest(testDescriptor: TestDescriptor) {}
+        override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) {}
+        override fun afterSuite(suite: TestDescriptor, result: TestResult) {
+            if (suite.parent == null) {
+                println(
+                    "Tests: ${result.resultType} — ${result.testCount} run, " +
+                        "${result.failedTestCount} failed, ${result.skippedTestCount} skipped"
+                )
+            }
+        }
+    })
 }

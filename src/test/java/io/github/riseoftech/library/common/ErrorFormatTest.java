@@ -4,15 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.riseoftech.library.IntegrationTest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 class ErrorFormatTest extends IntegrationTest {
@@ -49,6 +53,42 @@ class ErrorFormatTest extends IntegrationTest {
     }
 
     @Test
+    void requestParamConstraintViolationListsParameter() {
+        var result = assertThat(mvc.get().uri("/test-errors/params?size=500"))
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .hasContentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson();
+        result.extractingPath("$.code").isEqualTo(ErrorCodes.VALIDATION_FAILED);
+        result.extractingPath("$.errors[0].field").isEqualTo("size");
+    }
+
+    @Test
+    void requestParamTypeMismatchListsParameter() {
+        var result = assertThat(mvc.get().uri("/test-errors/params?color=PURPLE"))
+                .hasStatus(HttpStatus.BAD_REQUEST)
+                .hasContentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson();
+        result.extractingPath("$.code").isEqualTo(ErrorCodes.VALIDATION_FAILED);
+        result.extractingPath("$.errors[0].field").isEqualTo("color");
+    }
+
+    @Test
+    void validRequestParamsPass() {
+        assertThat(mvc.get().uri("/test-errors/params?size=10&color=RED"))
+                .hasStatus(HttpStatus.OK);
+    }
+
+    @Test
+    void optimisticLockFailureReturnsConcurrentModification() {
+        var result = assertThat(mvc.get().uri("/test-errors/stale"))
+                .hasStatus(HttpStatus.CONFLICT)
+                .hasContentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .bodyJson();
+        result.extractingPath("$.code").isEqualTo(ErrorCodes.CONCURRENT_MODIFICATION);
+        result.extractingPath("$.status").isEqualTo(409);
+    }
+
+    @Test
     void malformedBodyReturnsBadRequest() {
         assertThat(mvc.post().uri("/test-errors/validated")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,6 +121,8 @@ class ErrorFormatTest extends IntegrationTest {
         record Payload(@NotBlank String name) {
         }
 
+        enum Color { RED, GREEN }
+
         @GetMapping("/test-errors/conflict")
         void conflict() {
             throw new ConflictException("TEST_CONFLICT", "Something conflicts");
@@ -88,6 +130,16 @@ class ErrorFormatTest extends IntegrationTest {
 
         @PostMapping("/test-errors/validated")
         void validated(@Valid @RequestBody Payload payload) {
+        }
+
+        @GetMapping("/test-errors/params")
+        void params(@RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+                @RequestParam(required = false) Color color) {
+        }
+
+        @GetMapping("/test-errors/stale")
+        void stale() {
+            throw new ObjectOptimisticLockingFailureException(Object.class, 1L);
         }
 
         @GetMapping("/test-errors/boom")
