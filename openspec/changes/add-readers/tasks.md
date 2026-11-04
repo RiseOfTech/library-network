@@ -9,7 +9,7 @@
 
 ## 2. Database schema
 
-- [ ] 2.1 Add `V3__readers.sql` with `reader_card_number_seq`, table `reader`, `uk_reader_card_number`, `ck_reader_contact` and indexes `ix_reader_last_name`, `ix_reader_category` from design.md
+- [x] 2.1 Add `V3__readers.sql` with `reader_card_number_seq`, table `reader`, `uk_reader_card_number`, `ck_reader_contact` and indexes `ix_reader_last_name`, `ix_reader_category` from design.md
 - [ ] 2.2 Verify `ApplicationSmokeTest` passes (Flyway applies V3; Hibernate `validate` succeeds once the `Reader` entity exists)
 
 ## 3. Reader categories
