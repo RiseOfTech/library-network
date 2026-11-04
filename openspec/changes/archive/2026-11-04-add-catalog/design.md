@@ -96,6 +96,29 @@ grouped by branch: `count(*) filter (status <> 'LOST')` as `total` and
 
 The empty `V1__baseline.sql` stays as is: migrations that are already applied are never edited.
 
+## Принятые решения
+
+Recorded at the final review (2026-11-03). There was no `progress.md`, so these are taken from the code
+and its tests.
+
+- **`saveAndFlush` inside the service.** Create and update flush in the service method, so a
+  unique-constraint race surfaces as `DataIntegrityViolationException` inside the `try`. It is then
+  mapped by constraint name (`UniqueConstraints.isViolated`), not at commit time in the proxy.
+  Tests: `duplicate*ViolatesNamedConstraint`.
+- **Branch `code` and copy `inventory_number` cannot change** (`updatable = false`). `PUT /api/branches/{id}`
+  ignores `code` (`codeInUpdateIsIgnored`). A copy's `book` is fixed too; its `branch` stays
+  updatable for `add-transfers`.
+- **Clients cannot set copy status.** `RegisterCopyRequest` has no `status`, a new copy is always
+  `ON_SHELF`, and changes go only through `markLost()` / `markFound()` (`statusCannotBeSetByClient`).
+- **Availability:** `LOST` copies do not count towards `total`; other non-shelf statuses count towards
+  `total` but not `onShelf` (`copiesNotOnShelfCountTowardsTotalOnly`). An existing book with no copies
+  returns `[]`, an unknown book returns `404`.
+- **Search details:** a blank `q` returns every book ordered by title and id. `%`, `_` and `\` in `q`
+  are escaped and matched literally. A book that matches on both title and author is returned once
+  (`distinct` plus a separate `count(distinct)` query).
+- **Paging sort is fixed:** books by `title, id`, copies by `inventoryNumber`, branches (not paged)
+  by `code`.
+
 ## Risks / Trade-offs
 
 - [`like %q%` search does not use the title index for leading wildcards] → acceptable for a
