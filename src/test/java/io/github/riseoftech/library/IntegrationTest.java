@@ -9,11 +9,11 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 /**
  * Base class for integration tests: full application context
- * backed by PostgreSQL in Testcontainers.
+ * backed by PostgreSQL in Testcontainers and a clock fixed at {@link FixedClockConfiguration#TODAY}.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestcontainersConfiguration.class)
+@Import({TestcontainersConfiguration.class, FixedClockConfiguration.class})
 public abstract class IntegrationTest {
 
     @Autowired

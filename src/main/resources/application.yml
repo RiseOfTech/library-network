@@ -25,6 +25,21 @@ management:
       probes:
         enabled: true
 
+library:
+  readers:
+    # Keys are lower case; the API category code is the key in upper case (adult -> ADULT).
+    categories:
+      adult:
+        loan-limit: 5
+        loan-period-days: 21
+      student:
+        loan-limit: 10
+        loan-period-days: 30
+      child:
+        loan-limit: 3
+        loan-period-days: 14
+        max-age-exclusive: 14
+
 springdoc:
   api-docs:
     path: /v3/api-docs

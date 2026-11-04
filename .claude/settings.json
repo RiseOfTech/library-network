@@ -10,6 +10,8 @@
       "Bash(docker info)",
       "Bash(docker info *)",
       "Bash(javap *)",
+      "Bash(git check-ignore *)",
+      "Bash(git rev-list *)",
       "mcp__claude_ai_Claude_Docs__guide"
     ]
   }

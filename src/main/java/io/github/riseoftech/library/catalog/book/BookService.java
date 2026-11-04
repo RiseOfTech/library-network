@@ -1,9 +1,8 @@
 package io.github.riseoftech.library.catalog.book;
 
-import java.util.Locale;
-
 import io.github.riseoftech.library.catalog.book.BookDtos.BookRequest;
 import io.github.riseoftech.library.catalog.book.BookDtos.BookResponse;
+import io.github.riseoftech.library.common.LikePatterns;
 import io.github.riseoftech.library.common.PageResponse;
 import io.github.riseoftech.library.common.UniqueConstraints;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -64,7 +63,7 @@ public class BookService {
         } else if (Isbn.isValid(query.strip())) {
             result = books.findByIsbn(Isbn.normalize(query.strip()), pageRequest);
         } else {
-            result = books.searchByTitleOrAuthor(likePattern(query.strip()), pageRequest);
+            result = books.searchByTitleOrAuthor(LikePatterns.contains(query.strip()), pageRequest);
         }
         return PageResponse.from(result, BookResponse::from);
     }
@@ -82,13 +81,5 @@ public class BookService {
             }
             throw ex;
         }
-    }
-
-    private static String likePattern(String query) {
-        String escaped = query.toLowerCase(Locale.ROOT)
-                .replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_");
-        return "%" + escaped + "%";
     }
 }
