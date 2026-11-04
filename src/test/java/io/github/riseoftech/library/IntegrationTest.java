@@ -1,0 +1,20 @@
+package io.github.riseoftech.library;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.web.servlet.assertj.MockMvcTester;
+
+/**
+ * Base class for integration tests: full application context
+ * backed by PostgreSQL in Testcontainers.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(TestcontainersConfiguration.class)
+public abstract class IntegrationTest {
+
+    @Autowired
+    protected MockMvcTester mvc;
+}

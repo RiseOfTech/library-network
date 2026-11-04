@@ -1,0 +1,43 @@
+schema: spec-driven
+
+context: |
+  Project: library-network, a backend service for a network of city libraries with
+  several branches. Shared catalog (books), physical copies per branch, readers with a
+  network-wide membership, loans, renewals, holds queue, transfers between branches,
+  overdue fines, a nightly job and notifications. Portfolio/demo project: small, but with
+  real business rules, not plain CRUD.
+
+  Stack: Java 21, Spring Boot 4, Gradle Kotlin DSL, PostgreSQL, Flyway, Spring Data JPA,
+  REST API with springdoc-openapi, JUnit 5 + Testcontainers. No frontend.
+
+  Language: all artifacts (proposal, specs, design, tasks), code and README are in English.
+
+  Conventions:
+  - Code is organized by domain area (catalog, readers, loans, ...) under
+    io.github.riseoftech.library, not by technical layers at the top level.
+    Shared infrastructure lives in the `common` package.
+  - Every API error is RFC 9457 application/problem+json with a stable `code` property
+    (UPPER_SNAKE_CASE). Validation errors use code VALIDATION_FAILED and an `errors` list.
+  - No authentication: the API is treated as an internal librarian API. Do not model
+    users, roles or permissions.
+  - Business numbers (limits, periods, fine amounts) go to configuration
+    (@ConfigurationProperties), not hard-coded.
+  - Schema changes only through new Flyway migrations; existing migrations are never edited.
+  - No documentation beyond README.md and OpenSpec artifacts (no docs/ folder).
+
+rules:
+  proposal:
+    - Keep one change to one clear feature.
+    - Always include an explicit "Out of scope" section.
+    - List new or changed configuration properties with proposed default values.
+  specs:
+    - Describe only observable behavior through the HTTP API (and scheduled/async effects visible through it). No classes, tables or frameworks.
+    - Every scenario states the HTTP method and path, the expected HTTP status, and for errors the `code` value.
+    - Cover each business rule with at least one success scenario and one rejection scenario.
+  design:
+    - Explain transaction boundaries and concurrency handling wherever two requests can race for the same resource.
+    - State the database schema changes and the Flyway migration they go into.
+  tasks:
+    - Group tasks by layer of the feature (migration, domain, API, tests), small enough to review one by one.
+    - Each business rule has a test task; integration tests use Testcontainers PostgreSQL.
+    - Last task group verifies `./gradlew build` passes.
