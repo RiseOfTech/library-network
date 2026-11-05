@@ -21,7 +21,7 @@ class BranchApiTest extends IntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        truncate("copy", "branch");
+        truncate("loan", "copy", "branch");
     }
 
     @Test

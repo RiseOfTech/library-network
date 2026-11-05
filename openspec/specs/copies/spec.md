@@ -57,6 +57,10 @@ cannot be marked lost through this operation.
 - **WHEN** a client sends `POST /api/copies/{id}/lost` for a copy with status `LOST`
 - **THEN** the system responds `409 Conflict` with code `COPY_STATUS_CONFLICT` and the copy status is unchanged
 
+#### Scenario: Copy on loan cannot be marked lost
+- **WHEN** a copy is checked out (`ON_LOAN`) and a client sends `POST /api/copies/{id}/lost`
+- **THEN** the system responds `409 Conflict` with code `COPY_STATUS_CONFLICT`, the copy stays `ON_LOAN` and its loan stays `OPEN`
+
 ### Requirement: Mark a lost copy as found
 The system SHALL allow returning a `LOST` copy to `ON_SHELF` in the branch it belongs to.
 
@@ -92,6 +96,10 @@ status `ON_SHELF`), ordered by `branchCode`.
 #### Scenario: Availability across branches
 - **WHEN** a book has in branch `CENTRAL` 2 copies `ON_SHELF` and 1 `LOST`, and in branch `NORTH` 1 copy `ON_SHELF`, and a client sends `GET /api/books/{id}/availability`
 - **THEN** the system responds `200 OK` with `[{"branchCode": "CENTRAL", "total": 2, "onShelf": 2, ...}, {"branchCode": "NORTH", "total": 1, "onShelf": 1, ...}]`
+
+#### Scenario: Copies on loan are counted but not on the shelf
+- **WHEN** a book has 2 copies in branch `CENTRAL`, one of them is checked out with `POST /api/loans`, and a client sends `GET /api/books/{id}/availability`
+- **THEN** the system responds `200 OK` with `CENTRAL` `total` 2 and `onShelf` 1; after the loan is returned with `POST /api/loans/{loanId}/return` the same request shows `onShelf` 2
 
 #### Scenario: Book without copies
 - **WHEN** a book has no copies and a client sends `GET /api/books/{id}/availability`

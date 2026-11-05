@@ -59,6 +59,46 @@ class CopyTest {
         assertThat(copy.getStatus()).isEqualTo(status);
     }
 
+    @Test
+    void copyOnShelfCanBeCheckedOut() {
+        Copy copy = copyIn(CopyStatus.ON_SHELF);
+
+        copy.checkOut();
+
+        assertThat(copy.getStatus()).isEqualTo(CopyStatus.ON_LOAN);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CopyStatus.class, names = "ON_SHELF", mode = EnumSource.Mode.EXCLUDE)
+    void copyNotOnShelfCannotBeCheckedOut(CopyStatus status) {
+        Copy copy = copyIn(status);
+
+        assertThatThrownBy(copy::checkOut)
+                .isInstanceOf(CopyStatusConflictException.class)
+                .extracting("code").isEqualTo(CopyStatusConflictException.CODE);
+        assertThat(copy.getStatus()).isEqualTo(status);
+    }
+
+    @Test
+    void copyOnLoanCanBeCheckedIn() {
+        Copy copy = copyIn(CopyStatus.ON_LOAN);
+
+        copy.checkIn();
+
+        assertThat(copy.getStatus()).isEqualTo(CopyStatus.ON_SHELF);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CopyStatus.class, names = "ON_LOAN", mode = EnumSource.Mode.EXCLUDE)
+    void copyNotOnLoanCannotBeCheckedIn(CopyStatus status) {
+        Copy copy = copyIn(status);
+
+        assertThatThrownBy(copy::checkIn)
+                .isInstanceOf(CopyStatusConflictException.class)
+                .extracting("code").isEqualTo(CopyStatusConflictException.CODE);
+        assertThat(copy.getStatus()).isEqualTo(status);
+    }
+
     private static Copy newCopy() {
         return new Copy(new Book("Dune", List.of("Frank Herbert"), "9780441172719", null),
                 new Branch("CENTRAL", "Central", "1 Main St"), "CEN-1");

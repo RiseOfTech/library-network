@@ -31,7 +31,7 @@ class ReaderConcurrencyTest extends IntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        truncate("reader");
+        truncate("loan", "reader");
     }
 
     @Test

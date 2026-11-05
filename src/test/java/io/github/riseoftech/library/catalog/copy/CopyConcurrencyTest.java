@@ -35,7 +35,7 @@ class CopyConcurrencyTest extends IntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        truncate("copy", "book_author", "book", "branch");
+        truncate("loan", "copy", "book_author", "book", "branch");
     }
 
     @Test

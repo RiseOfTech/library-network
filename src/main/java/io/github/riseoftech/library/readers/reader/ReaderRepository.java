@@ -1,11 +1,20 @@
 package io.github.riseoftech.library.readers.reader;
 
+import java.util.Optional;
+
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 public interface ReaderRepository extends JpaRepository<Reader, Long> {
+
+    /** {@code select ... for update}: the row stays locked until the transaction ends. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from Reader r where r.id = :id")
+    Optional<Reader> findByIdForUpdate(long id);
 
     /** Next value of {@code reader_card_number_seq}; never returns the same value twice. */
     @Query(value = "select nextval('reader_card_number_seq')", nativeQuery = true)
