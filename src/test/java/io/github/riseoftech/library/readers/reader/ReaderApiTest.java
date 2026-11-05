@@ -28,7 +28,7 @@ class ReaderApiTest extends IntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        truncate("reader");
+        truncate("loan", "reader");
     }
 
     // --- registration ---

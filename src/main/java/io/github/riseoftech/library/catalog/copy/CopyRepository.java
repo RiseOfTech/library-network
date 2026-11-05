@@ -1,13 +1,21 @@
 package io.github.riseoftech.library.catalog.copy;
 
 import java.util.List;
+import java.util.Optional;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
 public interface CopyRepository extends JpaRepository<Copy, Long> {
+
+    /** {@code select ... for update}: the row stays locked until the transaction ends. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Copy c where c.id = :id")
+    Optional<Copy> findByIdForUpdate(long id);
 
     boolean existsByInventoryNumber(String inventoryNumber);
 
